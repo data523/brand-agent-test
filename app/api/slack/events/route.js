@@ -8,6 +8,20 @@ export const maxDuration = 60;
 
 export async function POST(request) {
   const rawBody = await request.text();
+
+  let payload;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch {
+    return Response.json({ ok: false, error: 'invalid_json' }, { status: 400 });
+  }
+
+  // Slack's Events API URL verification is a one-time handshake.
+  // Handle the challenge before loading the rest of the runtime configuration.
+  if (payload.type === 'url_verification') {
+    return Response.json({ challenge: payload.challenge });
+  }
+
   const timestamp = request.headers.get('x-slack-request-timestamp');
   const signature = request.headers.get('x-slack-signature');
 
@@ -19,17 +33,6 @@ export async function POST(request) {
   });
 
   if (!valid) return Response.json({ ok: false, error: 'invalid_signature' }, { status: 401 });
-
-  let payload;
-  try {
-    payload = JSON.parse(rawBody);
-  } catch {
-    return Response.json({ ok: false, error: 'invalid_json' }, { status: 400 });
-  }
-
-  if (payload.type === 'url_verification') {
-    return Response.json({ challenge: payload.challenge });
-  }
 
   if (payload.type === 'event_callback') {
     after(async () => {
