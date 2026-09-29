@@ -14,9 +14,12 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const brandId = body.brandId;
   const folderId = body.folderId || config().googleDriveFolderId;
+  const fileId = body.fileId || null;
   if (!brandId || !folderId) return Response.json({ ok: false, error: 'brandId and folderId are required' }, { status: 400 });
 
-  const { token, files } = await listFilesRecursive(folderId);
+  const { token, files: discoveredFiles } = await listFilesRecursive(folderId);
+  const files = fileId ? discoveredFiles.filter((file) => file.id === fileId) : discoveredFiles;
+  if (fileId && !files.length) return Response.json({ ok: false, error: 'fileId_not_found_in_folder' }, { status: 404 });
   const results = [];
 
   for (const file of files) {
