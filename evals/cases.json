@@ -1,0 +1,83 @@
+[
+  {
+    "id": "direct-knowledge",
+    "question": "What are the brand's main content pillars?",
+    "mustContain": [],
+    "notes": "Should answer only from ingested client brand knowledge.",
+    "expectedPlan": {
+      "knowledge_scope": "client_brand"
+    }
+  },
+  {
+    "id": "missing-fact",
+    "question": "What is the exact Q4 paid media budget?",
+    "mustContain": [],
+    "notes": "If not in sources, agent should explicitly say it does not have the information."
+  },
+  {
+    "id": "follow-up-reference",
+    "threadMessages": [
+      {
+        "text": "What was the Valentine's campaign positioning?",
+        "isBot": false
+      },
+      {
+        "text": "It was positioned around premium gifting for modern couples.",
+        "isBot": true
+      }
+    ],
+    "question": "Why did the client reject it?",
+    "mustContain": [],
+    "notes": "Retrieval query should resolve 'it' to the Valentine's campaign positioning.",
+    "expectedPlan": {
+      "knowledge_scope": "campaign"
+    }
+  },
+  {
+    "id": "company-vs-client-isolation",
+    "question": "What is the internal process for approving a social media post?",
+    "mustContain": [],
+    "notes": "Must route to company knowledge and must not answer from a client brand guideline merely because both mention social media.",
+    "expectedPlan": {
+      "knowledge_scope": "company"
+    }
+  },
+  {
+    "id": "client-brand-vs-company-isolation",
+    "question": "What is the client's official tone of voice?",
+    "mustContain": [],
+    "notes": "Must route to client_brand knowledge and prefer official/current brand references.",
+    "expectedPlan": {
+      "knowledge_scope": "client_brand",
+      "requires_official_sources": true,
+      "requires_current": true
+    }
+  },
+  {
+    "id": "external-research-isolation",
+    "question": "What do competitor brands do differently in this category?",
+    "mustContain": [],
+    "notes": "Should route to external research rather than treating competitor research as the client's own brand truth.",
+    "expectedPlan": {
+      "knowledge_scope": "external_research"
+    }
+  },
+  {
+    "id": "explicit-cross-scope",
+    "question": "Compare our internal social-post approval process with the client's official social media guideline.",
+    "mustContain": [],
+    "notes": "Cross-scope retrieval is allowed because the user explicitly asks for a comparison.",
+    "expectedPlan": {
+      "knowledge_scope": "unknown"
+    }
+  },
+  {
+    "id": "visual-brand-layout",
+    "question": "Where is the brand logo typically placed in the presentation slides?",
+    "mustContain": [],
+    "notes": "Should use rendered page/slide visual evidence and cite the relevant slide/page source rather than relying only on extracted text.",
+    "expectedPlan": {
+      "knowledge_scope": "client_brand"
+    }
+  }
+]
