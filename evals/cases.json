@@ -79,5 +79,37 @@
     "expectedPlan": {
       "knowledge_scope": "client_brand"
     }
+  },
+  {
+    "id": "dated-change-routing",
+    "question": "What changed for BierGarten yesterday?",
+    "mustContain": [],
+    "notes": "Must route to change intelligence and preserve the entity/time window. Dated Slack evidence should be preferred over static documents.",
+    "expectedPlan": {
+      "intent": "change_lookup",
+      "knowledge_scope": "conversation",
+      "include_historical": true
+    }
+  },
+  {
+    "id": "current-approved-fact",
+    "question": "What is the current approved brand guideline for the client's tone of voice?",
+    "mustContain": [],
+    "notes": "Must require current official client-brand evidence and avoid superseded drafts.",
+    "expectedPlan": {
+      "knowledge_scope": "client_brand",
+      "requires_official_sources": true,
+      "requires_current": true
+    }
+  },
+  {
+    "id": "explicit-history",
+    "question": "Show me the previous version of the brand guideline and what it was superseded by.",
+    "mustContain": [],
+    "notes": "Historical retrieval is explicitly requested.",
+    "expectedPlan": {
+      "knowledge_scope": "client_brand",
+      "include_historical": true
+    }
   }
 ]
