@@ -78,6 +78,6 @@ test('generic model failure text is treated as a non-answer', () => {
   assert.equal(isNonAnswer('BierGarten has a warm, social positioning.'), false);
 });
 
-test('quality fallback must not classify a useful partial answer as failure', () => {
-  assert.equal(isNonAnswer('I could not verify an official HEX palette, but the indexed source does describe the visual direction.'), true);
+test('useful partial answers are not generic failures', () => {
+  assert.equal(isNonAnswer('I could not verify an official HEX palette, but the indexed source does describe the visual direction.'), false);
 });
