@@ -16,8 +16,6 @@ export async function POST(request) {
     return Response.json({ ok: false, error: 'invalid_json' }, { status: 400 });
   }
 
-  // Slack's Events API URL verification is a one-time handshake.
-  // Handle the challenge before loading the rest of the runtime configuration.
   if (payload.type === 'url_verification') {
     return Response.json({ challenge: payload.challenge });
   }
@@ -32,11 +30,24 @@ export async function POST(request) {
     signingSecret: config().slackSigningSecret
   });
 
-  if (!valid) return Response.json({ ok: false, error: 'invalid_signature' }, { status: 401 });
+  if (!valid) {
+    console.warn('[slack] invalid signature', { hasTimestamp: Boolean(timestamp), hasSignature: Boolean(signature) });
+    return Response.json({ ok: false, error: 'invalid_signature' }, { status: 401 });
+  }
 
   if (payload.type === 'event_callback') {
+    console.log('[slack] event_callback acknowledged', {
+      eventType: payload.event?.type || null,
+      eventId: payload.event_id || null
+    });
+
     after(async () => {
-      await processSlackEvent(payload);
+      try {
+        await processSlackEvent(payload);
+        console.log('[slack] event processing finished', { eventId: payload.event_id || null });
+      } catch (error) {
+        console.error('[slack] event processing crashed', error);
+      }
     });
   }
 
