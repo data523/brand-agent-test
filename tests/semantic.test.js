@@ -81,3 +81,9 @@ test('generic model failure text is treated as a non-answer', () => {
 test('useful partial answers are not generic failures', () => {
   assert.equal(isNonAnswer('I could not verify an official HEX palette, but the indexed source does describe the visual direction.'), false);
 });
+
+test('retrieval-policy output is treated as meta-only', async () => {
+  const { isMetaOnlyAnswer } = await import('../lib/agent.js');
+  assert.equal(isMetaOnlyAnswer('I found multiple brand sources. Decide between them using this order: current/approved brand source first; then explicit effective/source date and scope.'), true);
+  assert.equal(isMetaOnlyAnswer('Positioning: BierGarten is positioned around social dining, beer, food and experiences.'), false);
+});
