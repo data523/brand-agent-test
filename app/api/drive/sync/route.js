@@ -3,6 +3,7 @@ import { extractDriveText, inferDocumentType, listFilesRecursive } from '../../.
 import { ingestDocument } from '../../../../lib/rag.js';
 import { analyzeVisualAssets } from '../../../../lib/vision.js';
 import { supabase } from '../../../../lib/db.js';
+import { refreshBrandIntelligence } from '../../../../lib/brand-intelligence.js';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -131,5 +132,13 @@ export async function POST(request) {
     }
   }
 
-  return Response.json({ ok: true, brandId, folderId, filesFound: files.length, results });
+  let brandIntelligence = null;
+  try {
+    brandIntelligence = await refreshBrandIntelligence({ brandId });
+  } catch (error) {
+    console.error('[drive-sync] Brand Intelligence refresh failed', error);
+    brandIntelligence = { generated: false, error: error.message };
+  }
+
+  return Response.json({ ok: true, brandId, folderId, filesFound: files.length, results, brandIntelligence });
 }
