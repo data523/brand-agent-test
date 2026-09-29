@@ -123,5 +123,187 @@
     ],
     "answerMustBeNonMeta": true,
     "notes": "Regression test for the core brand-synthesis behavior. The response must answer the brand question instead of exposing retrieval policy."
+  },
+  {
+    "id": "brand-overview",
+    "question": "Give me a concise but complete overview of this brand.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests synthesis across core brand dimensions."
+  },
+  {
+    "id": "positioning-explanation",
+    "question": "How is this brand positioned, and what makes that positioning different from competitors?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Requires positioning synthesis without inventing competitive claims."
+  },
+  {
+    "id": "audience",
+    "question": "Who is the brand trying to attract? Include relevant audience traits, needs, and occasions.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests audience understanding."
+  },
+  {
+    "id": "audience-vs-campaign",
+    "question": "Who is the permanent target audience, and which audiences appear only in the campaign material?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Separates durable audience truth from campaign targeting."
+  },
+  {
+    "id": "tone-examples",
+    "question": "What does the brand's tone of voice mean in practice? Give examples of how copy should sound.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests translating documented voice into usable guidance without inventing unsupported rules."
+  },
+  {
+    "id": "visual-identity",
+    "question": "Describe the brand's visual identity: colors, typography, logo use, imagery, and overall look.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests visual synthesis and explicit-vs-observed distinction."
+  },
+  {
+    "id": "visual-uncertainty",
+    "question": "What visual details are officially documented, and what visual details are only observations from the supplied material?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests evidence status."
+  },
+  {
+    "id": "products-offering",
+    "question": "What does the brand actually offer, and what customer problem does it solve?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests offering/brand understanding."
+  },
+  {
+    "id": "brand-promise",
+    "question": "What is the brand promise or core value proposition?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests essence/positioning synthesis."
+  },
+  {
+    "id": "brand-personality",
+    "question": "If you had to brief a creative team on the brand personality, what would you tell them?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests practical synthesis."
+  },
+  {
+    "id": "campaign-boundary",
+    "question": "Which parts of the available guidance should a designer treat as campaign-specific rather than permanent brand rules?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests scope reasoning."
+  },
+  {
+    "id": "conflicting-tone",
+    "question": "Two sources appear to give different tone-of-voice directions. What differs, which one should be treated as current, and why?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests conflict resolution and provenance."
+  },
+  {
+    "id": "outdated-source",
+    "question": "Are any brand sources outdated or superseded? Explain what is outdated and what replaced it.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests version awareness."
+  },
+  {
+    "id": "draft-vs-approved",
+    "question": "If a draft brand guideline conflicts with an approved guideline, how should the answer reflect that conflict?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests authority handling without exposing internal retrieval policy."
+  },
+  {
+    "id": "campaign-vs-brand",
+    "question": "A campaign uses a visual style that differs from the brand guideline. Does that automatically change the brand identity?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests campaign permanence reasoning."
+  },
+  {
+    "id": "unsupported-claim",
+    "question": "Does the brand have an official HEX color palette? If the sources do not explicitly provide one, say so.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests hallucination resistance."
+  },
+  {
+    "id": "unsupported-budget",
+    "question": "What is the exact current marketing budget? If it is not documented, do not estimate it.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests missing-fact handling."
+  },
+  {
+    "id": "ambiguous-question",
+    "question": "What is the brand's style?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests ambiguity handling while still being useful."
+  },
+  {
+    "id": "creative-brief",
+    "question": "Write a short creative brief for a new social reel that stays faithful to the brand.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests applying brand knowledge without changing brand truth."
+  },
+  {
+    "id": "copy-check",
+    "question": "Would this brand voice support a playful, premium, highly formal, or conversational social caption? Explain using the documented tone.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests reasoning from voice evidence."
+  },
+  {
+    "id": "source-accountability",
+    "question": "Which documents are the strongest evidence for the brand's positioning, and what does each contribute?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests source accountability without retrieval-policy dumping."
+  },
+  {
+    "id": "claim-confidence",
+    "question": "Which parts of your understanding of this brand are well-supported, and where are the knowledge gaps?",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests uncertainty and gaps."
+  },
+  {
+    "id": "thread-context",
+    "question": "Based on our earlier discussion, answer the follow-up question using the same brand context.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests conversational continuity."
+  },
+  {
+    "id": "multi-domain",
+    "question": "Explain how the brand positioning, audience, tone, and visual identity fit together as one coherent brand system.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests cross-domain reasoning."
+  },
+  {
+    "id": "creative-constraint",
+    "question": "Give three creative directions that fit the brand and explain which documented brand attributes each direction uses.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests constrained ideation grounded in evidence."
+  },
+  {
+    "id": "do-not-invent",
+    "question": "Tell me one thing you know about this brand and one thing you cannot verify from the available knowledge.",
+    "mustContain": [],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests epistemic honesty."
   }
 ]
