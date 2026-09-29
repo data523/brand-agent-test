@@ -111,5 +111,17 @@
       "knowledge_scope": "client_brand",
       "include_historical": true
     }
+  },
+  {
+    "id": "brand-synthesis-not-retrieval-policy",
+    "question": "What do you know about the brand's positioning, target audience, tone of voice, and visual identity? Separate permanent brand truth from campaign-specific guidance. Also tell me which sources you are relying on and whether there are any conflicts or outdated information.",
+    "mustContain": [],
+    "mustNotContain": [
+      "decide between them using this order",
+      "current/approved brand source first",
+      "sources i found are"
+    ],
+    "answerMustBeNonMeta": true,
+    "notes": "Regression test for the core brand-synthesis behavior. The response must answer the brand question instead of exposing retrieval policy."
   }
 ]
