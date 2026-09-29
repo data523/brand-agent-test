@@ -6,13 +6,15 @@
     "notes": "Should answer only from ingested client brand knowledge.",
     "expectedPlan": {
       "knowledge_scope": "client_brand"
-    }
+    },
+    "category": "retrieval-and-routing"
   },
   {
     "id": "missing-fact",
     "question": "What is the exact Q4 paid media budget?",
     "mustContain": [],
-    "notes": "If not in sources, agent should explicitly say it does not have the information."
+    "notes": "If not in sources, agent should explicitly say it does not have the information.",
+    "category": "retrieval-and-routing"
   },
   {
     "id": "follow-up-reference",
@@ -31,7 +33,8 @@
     "notes": "Retrieval query should resolve 'it' to the Valentine's campaign positioning.",
     "expectedPlan": {
       "knowledge_scope": "campaign"
-    }
+    },
+    "category": "retrieval-and-routing"
   },
   {
     "id": "company-vs-client-isolation",
@@ -40,7 +43,8 @@
     "notes": "Must route to company knowledge and must not answer from a client brand guideline merely because both mention social media.",
     "expectedPlan": {
       "knowledge_scope": "company"
-    }
+    },
+    "category": "retrieval-and-routing"
   },
   {
     "id": "client-brand-vs-company-isolation",
@@ -51,7 +55,8 @@
       "knowledge_scope": "client_brand",
       "requires_official_sources": true,
       "requires_current": true
-    }
+    },
+    "category": "retrieval-and-routing"
   },
   {
     "id": "external-research-isolation",
@@ -60,7 +65,8 @@
     "notes": "Should route to external research rather than treating competitor research as the client's own brand truth.",
     "expectedPlan": {
       "knowledge_scope": "external_research"
-    }
+    },
+    "category": "retrieval-and-routing"
   },
   {
     "id": "explicit-cross-scope",
@@ -69,7 +75,8 @@
     "notes": "Cross-scope retrieval is allowed because the user explicitly asks for a comparison.",
     "expectedPlan": {
       "knowledge_scope": "unknown"
-    }
+    },
+    "category": "retrieval-and-routing"
   },
   {
     "id": "visual-brand-layout",
@@ -78,7 +85,8 @@
     "notes": "Should use rendered page/slide visual evidence and cite the relevant slide/page source rather than relying only on extracted text.",
     "expectedPlan": {
       "knowledge_scope": "client_brand"
-    }
+    },
+    "category": "voice-and-visual"
   },
   {
     "id": "dated-change-routing",
@@ -89,7 +97,8 @@
       "intent": "change_lookup",
       "knowledge_scope": "conversation",
       "include_historical": true
-    }
+    },
+    "category": "scope-and-provenance"
   },
   {
     "id": "current-approved-fact",
@@ -100,7 +109,8 @@
       "knowledge_scope": "client_brand",
       "requires_official_sources": true,
       "requires_current": true
-    }
+    },
+    "category": "scope-and-provenance"
   },
   {
     "id": "explicit-history",
@@ -110,7 +120,8 @@
     "expectedPlan": {
       "knowledge_scope": "client_brand",
       "include_historical": true
-    }
+    },
+    "category": "scope-and-provenance"
   },
   {
     "id": "brand-synthesis-not-retrieval-policy",
@@ -122,188 +133,215 @@
       "sources i found are"
     ],
     "answerMustBeNonMeta": true,
-    "notes": "Regression test for the core brand-synthesis behavior. The response must answer the brand question instead of exposing retrieval policy."
+    "notes": "Regression test for the core brand-synthesis behavior. The response must answer the brand question instead of exposing retrieval policy.",
+    "category": "retrieval-and-routing"
   },
   {
     "id": "brand-overview",
     "question": "Give me a concise but complete overview of this brand.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests synthesis across core brand dimensions."
+    "notes": "Tests synthesis across core brand dimensions.",
+    "category": "brand-understanding"
   },
   {
     "id": "positioning-explanation",
     "question": "How is this brand positioned, and what makes that positioning different from competitors?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Requires positioning synthesis without inventing competitive claims."
+    "notes": "Requires positioning synthesis without inventing competitive claims.",
+    "category": "brand-understanding"
   },
   {
     "id": "audience",
     "question": "Who is the brand trying to attract? Include relevant audience traits, needs, and occasions.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests audience understanding."
+    "notes": "Tests audience understanding.",
+    "category": "brand-understanding"
   },
   {
     "id": "audience-vs-campaign",
     "question": "Who is the permanent target audience, and which audiences appear only in the campaign material?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Separates durable audience truth from campaign targeting."
+    "notes": "Separates durable audience truth from campaign targeting.",
+    "category": "scope-and-provenance"
   },
   {
     "id": "tone-examples",
     "question": "What does the brand's tone of voice mean in practice? Give examples of how copy should sound.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests translating documented voice into usable guidance without inventing unsupported rules."
+    "notes": "Tests translating documented voice into usable guidance without inventing unsupported rules.",
+    "category": "voice-and-visual"
   },
   {
     "id": "visual-identity",
     "question": "Describe the brand's visual identity: colors, typography, logo use, imagery, and overall look.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests visual synthesis and explicit-vs-observed distinction."
+    "notes": "Tests visual synthesis and explicit-vs-observed distinction.",
+    "category": "voice-and-visual"
   },
   {
     "id": "visual-uncertainty",
     "question": "What visual details are officially documented, and what visual details are only observations from the supplied material?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests evidence status."
+    "notes": "Tests evidence status.",
+    "category": "voice-and-visual"
   },
   {
     "id": "products-offering",
     "question": "What does the brand actually offer, and what customer problem does it solve?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests offering/brand understanding."
+    "notes": "Tests offering/brand understanding.",
+    "category": "brand-understanding"
   },
   {
     "id": "brand-promise",
     "question": "What is the brand promise or core value proposition?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests essence/positioning synthesis."
+    "notes": "Tests essence/positioning synthesis.",
+    "category": "brand-understanding"
   },
   {
     "id": "brand-personality",
     "question": "If you had to brief a creative team on the brand personality, what would you tell them?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests practical synthesis."
+    "notes": "Tests practical synthesis.",
+    "category": "brand-understanding"
   },
   {
     "id": "campaign-boundary",
     "question": "Which parts of the available guidance should a designer treat as campaign-specific rather than permanent brand rules?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests scope reasoning."
+    "notes": "Tests scope reasoning.",
+    "category": "scope-and-provenance"
   },
   {
     "id": "conflicting-tone",
     "question": "Two sources appear to give different tone-of-voice directions. What differs, which one should be treated as current, and why?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests conflict resolution and provenance."
+    "notes": "Tests conflict resolution and provenance.",
+    "category": "conflict-and-versioning"
   },
   {
     "id": "outdated-source",
     "question": "Are any brand sources outdated or superseded? Explain what is outdated and what replaced it.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests version awareness."
+    "notes": "Tests version awareness.",
+    "category": "conflict-and-versioning"
   },
   {
     "id": "draft-vs-approved",
     "question": "If a draft brand guideline conflicts with an approved guideline, how should the answer reflect that conflict?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests authority handling without exposing internal retrieval policy."
+    "notes": "Tests authority handling without exposing internal retrieval policy.",
+    "category": "conflict-and-versioning"
   },
   {
     "id": "campaign-vs-brand",
     "question": "A campaign uses a visual style that differs from the brand guideline. Does that automatically change the brand identity?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests campaign permanence reasoning."
+    "notes": "Tests campaign permanence reasoning.",
+    "category": "conflict-and-versioning"
   },
   {
     "id": "unsupported-claim",
     "question": "Does the brand have an official HEX color palette? If the sources do not explicitly provide one, say so.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests hallucination resistance."
+    "notes": "Tests hallucination resistance.",
+    "category": "epistemic-safety"
   },
   {
     "id": "unsupported-budget",
     "question": "What is the exact current marketing budget? If it is not documented, do not estimate it.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests missing-fact handling."
+    "notes": "Tests missing-fact handling.",
+    "category": "epistemic-safety"
   },
   {
     "id": "ambiguous-question",
     "question": "What is the brand's style?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests ambiguity handling while still being useful."
+    "notes": "Tests ambiguity handling while still being useful.",
+    "category": "epistemic-safety"
   },
   {
     "id": "creative-brief",
     "question": "Write a short creative brief for a new social reel that stays faithful to the brand.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests applying brand knowledge without changing brand truth."
+    "notes": "Tests applying brand knowledge without changing brand truth.",
+    "category": "creative-application"
   },
   {
     "id": "copy-check",
     "question": "Would this brand voice support a playful, premium, highly formal, or conversational social caption? Explain using the documented tone.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests reasoning from voice evidence."
+    "notes": "Tests reasoning from voice evidence.",
+    "category": "voice-and-visual"
   },
   {
     "id": "source-accountability",
     "question": "Which documents are the strongest evidence for the brand's positioning, and what does each contribute?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests source accountability without retrieval-policy dumping."
+    "notes": "Tests source accountability without retrieval-policy dumping.",
+    "category": "scope-and-provenance"
   },
   {
     "id": "claim-confidence",
     "question": "Which parts of your understanding of this brand are well-supported, and where are the knowledge gaps?",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests uncertainty and gaps."
+    "notes": "Tests uncertainty and gaps.",
+    "category": "scope-and-provenance"
   },
   {
     "id": "thread-context",
     "question": "Based on our earlier discussion, answer the follow-up question using the same brand context.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests conversational continuity."
+    "notes": "Tests conversational continuity.",
+    "category": "conversation"
   },
   {
     "id": "multi-domain",
     "question": "Explain how the brand positioning, audience, tone, and visual identity fit together as one coherent brand system.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests cross-domain reasoning."
+    "notes": "Tests cross-domain reasoning.",
+    "category": "brand-understanding"
   },
   {
     "id": "creative-constraint",
     "question": "Give three creative directions that fit the brand and explain which documented brand attributes each direction uses.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests constrained ideation grounded in evidence."
+    "notes": "Tests constrained ideation grounded in evidence.",
+    "category": "creative-application"
   },
   {
     "id": "do-not-invent",
     "question": "Tell me one thing you know about this brand and one thing you cannot verify from the available knowledge.",
     "mustContain": [],
     "answerMustBeNonMeta": true,
-    "notes": "Tests epistemic honesty."
+    "notes": "Tests epistemic honesty.",
+    "category": "epistemic-safety"
   }
 ]
