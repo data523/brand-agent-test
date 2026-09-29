@@ -45,7 +45,7 @@ Run migrations in order:
 9. `supabase/migrations/009_visual_page_evidence.sql`
 10. `supabase/migrations/010_versioning_entity_resolution.sql`
 11. `supabase/migrations/011_change_intelligence.sql`
-12. `supabase/migrations/012_change_intelligence_indexes.sql`
+12. `supabase/migrations/012_change_intelligence_indexes.sql\n- 013_trust_and_change_evidence.sql`
 
 Existing rows are intentionally left with `knowledge_scope = 'unknown'` until they are re-ingested and classified from source evidence.
 
