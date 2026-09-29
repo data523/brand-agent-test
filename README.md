@@ -1,6 +1,6 @@
 # Brand Intelligence Agent
 
-Slack-native RAG agent for multi-entity brand knowledge.
+Slack-native RAG ai agent for multi-entity brand knowledge.
 
 ## Core behavior
 
