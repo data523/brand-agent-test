@@ -42,6 +42,10 @@ Run migrations in order:
 6. `supabase/migrations/006_source_locations.sql`
 7. `supabase/migrations/007_cross_scope_retrieval.sql`
 8. `supabase/migrations/008_visual_brand_context.sql`
+9. `supabase/migrations/009_visual_page_evidence.sql`
+10. `supabase/migrations/010_versioning_entity_resolution.sql`
+11. `supabase/migrations/011_change_intelligence.sql`
+12. `supabase/migrations/012_change_intelligence_indexes.sql`
 
 Existing rows are intentionally left with `knowledge_scope = 'unknown'` until they are re-ingested and classified from source evidence.
 
