@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { KNOWLEDGE_SCOPES, DOCUMENT_TYPES, classifyQuery } from '../lib/knowledge.js';
 import { normalizeChangeQuery, slackTimestampToDate } from '../lib/slack-events.js';
+import { isNonAnswer } from '../lib/agent.js';
 
 test('semantic taxonomy contains required scopes', () => {
   for (const scope of ['company', 'client_brand', 'client_project', 'campaign', 'external_research', 'conversation', 'unknown']) {
@@ -68,4 +69,15 @@ test('conflicting-document questions use the dedicated comparison path', async (
   assert.equal(plan.knowledge_scope, 'client_brand');
   assert.equal(plan.include_historical, true);
   assert.ok(plan.knowledge_scopes.includes('client_brand'));
+});
+
+
+test('generic model failure text is treated as a non-answer', () => {
+  assert.equal(isNonAnswer('I could not find enough verified brand information to answer that reliably yet.'), true);
+  assert.equal(isNonAnswer("I couldn't find enough verified brand information to answer that reliably yet."), true);
+  assert.equal(isNonAnswer('BierGarten has a warm, social positioning.'), false);
+});
+
+test('quality fallback must not classify a useful partial answer as failure', () => {
+  assert.equal(isNonAnswer('I could not verify an official HEX palette, but the indexed source does describe the visual direction.'), true);
 });
