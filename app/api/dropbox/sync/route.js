@@ -64,7 +64,10 @@ async function ingestFileDocument({ brandId, folder, file, buffer }) {
 }
 
 export async function POST(request) {
-  if ((request.headers.get('authorization') || '') !== `Bearer ${config().adminSecret}`) return Response.json({ ok: false }, { status: 401 });
+  // Accepts the normal admin secret, or a token scoped to this endpoint (DROPBOX_SYNC_TOKEN).
+  const bearer = request.headers.get('authorization') || '';
+  const scoped = process.env.DROPBOX_SYNC_TOKEN;
+  if (bearer !== `Bearer ${config().adminSecret}` && !(scoped && bearer === `Bearer ${scoped}`)) return Response.json({ ok: false }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
   const { brandId, folder, dryRun = false, onlyPaths = null } = body;
