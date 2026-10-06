@@ -1,7 +1,7 @@
 import { after } from 'next/server';
-import { config } from '../../../../../lib/config.js';
-import { verifySlackSignature } from '../../../../../lib/slack-signature.js';
-import { processInteractiveEvent } from '../../../../../lib/slack-interactive.js';
+import { config } from '../../../../lib/config.js';
+import { verifySlackSignature } from '../../../../lib/slack-signature.js';
+import { processInteractiveEvent } from '../../../../lib/slack-interactive.js';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
