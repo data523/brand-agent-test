@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveBrandId } from '../lib/slack-handler.js';
+import { resolveBrandId, matchBrandInText } from '../lib/slack-handler.js';
 
 // Minimal stand-in for the supabase-js query builder used by resolveBrandId.
 function fakeDb(rows = [], error = null) {
@@ -59,4 +59,39 @@ test('env map is only a fallback; the table wins', async () => {
 test('database error is raised, not turned into a default brand', async () => {
   const db = fakeDb([], { message: 'boom' });
   await assert.rejects(() => resolveBrandId({ workspaceId: WORKSPACE, channelId: 'C_BIER', db, channelBrandMap: { C_BIER: 'biergarten' } }), /boom/);
+});
+
+// Stand-in for supabase.from('brands').select().eq('status','active').
+function fakeBrandsDb(brands) {
+  return {
+    from(table) {
+      assert.equal(table, 'brands');
+      const builder = { select() { return builder; }, async eq() { return { data: brands, error: null }; } };
+      return builder;
+    }
+  };
+}
+
+const BRANDS = [
+  { id: 'biergarten', name: 'BierGarten', aliases: ['Bier Garten'] },
+  { id: 'qp', name: 'QP', aliases: [] },
+  { id: 'cornerhouse', name: 'Corner House', aliases: ['CH'] }
+];
+
+test('unmapped channel: message naming exactly one brand resolves to it', async () => {
+  const db = fakeBrandsDb(BRANDS);
+  assert.equal(await matchBrandInText({ text: 'what is the tone for biergarten?', db }), 'biergarten');
+  assert.equal(await matchBrandInText({ text: 'Bier Garten colours?', db }), 'biergarten');
+  assert.equal(await matchBrandInText({ text: 'corner house logo rules', db }), 'cornerhouse');
+});
+
+test('unmapped channel: no brand named, or two brands named, gives no brand', async () => {
+  const db = fakeBrandsDb(BRANDS);
+  assert.equal(await matchBrandInText({ text: 'what is our tone of voice?', db }), '');
+  assert.equal(await matchBrandInText({ text: 'compare biergarten and QP', db }), '');
+});
+
+test('brand names only match whole words', async () => {
+  const db = fakeBrandsDb(BRANDS);
+  assert.equal(await matchBrandInText({ text: 'the qpl campaign', db }), '');
 });
