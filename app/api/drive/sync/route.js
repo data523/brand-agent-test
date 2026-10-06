@@ -4,6 +4,7 @@ import { ingestDocument } from '../../../../lib/rag.js';
 import { analyzeVisualAssets } from '../../../../lib/vision.js';
 import { supabase } from '../../../../lib/db.js';
 import { refreshBrandIntelligence } from '../../../../lib/brand-intelligence.js';
+import { recordManifest } from '../../../../lib/manifest.js';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -27,6 +28,10 @@ export async function POST(request) {
     try {
       const extracted = await extractDriveText(file, token);
       if (extracted.skipped || !extracted.text) {
+        await recordManifest({
+          brandId, source: `gdrive:${file.id}`, sourcePath: file.sourcePath, title: file.name,
+          mimeType: file.mimeType, status: 'skipped', skipReason: extracted.skipped || 'no_text'
+        });
         results.push({
           name: file.name,
           path: file.sourcePath,
@@ -128,6 +133,11 @@ export async function POST(request) {
         } : null
       });
     } catch (error) {
+      // ingestDocument records its own failures; this covers download/parse/vision errors before it runs.
+      await recordManifest({
+        brandId, source: `gdrive:${file.id}`, sourcePath: file.sourcePath, title: file.name,
+        mimeType: file.mimeType, status: 'failed', error: error.message
+      });
       results.push({ name: file.name, path: file.sourcePath, status: 'error', error: error.message });
     }
   }
