@@ -70,7 +70,7 @@ export async function POST(request) {
   if (bearer !== `Bearer ${config().adminSecret}` && !(scoped && bearer === `Bearer ${scoped}`)) return Response.json({ ok: false }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
-  const { brandId, folder, dryRun = false, onlyPaths = null } = body;
+  const { brandId, folder, dryRun = false, onlyPaths = null, inventoryOnly = false } = body;
   const maxBytes = Number(body.maxBytes || process.env.DROPBOX_MAX_BYTES || DEFAULT_MAX_BYTES);
   const link = process.env.DROPBOX_SHARED_LINK;
   if (!brandId || !folder) return Response.json({ ok: false, error: 'brandId and folder are required' }, { status: 400 });
@@ -95,7 +95,8 @@ export async function POST(request) {
   const results = [];
   const selected = Array.isArray(onlyPaths) && onlyPaths.length ? new Set(onlyPaths) : null;
 
-  for (const item of plan.filter((i) => i.action === 'ingest' && (!selected || selected.has(i.file.relPath)))) {
+  // inventoryOnly: skip parsing and only write the asset inventory + manifest rows for skipped/name-only files.
+  for (const item of plan.filter((i) => !inventoryOnly && i.action === 'ingest' && (!selected || selected.has(i.file.relPath)))) {
     const { file } = item;
     const source = `dropbox:${file.fileId || file.relPath}`;
     const manifest = { brandId, source, sourcePath: `${listing.folder}/${file.relPath}`, title: file.name };
