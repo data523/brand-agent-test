@@ -7,6 +7,7 @@ import { parseSwatchFile, describeColor } from '../../../../lib/swatch.js';
 import {
   openSharedLink, classifyFile, documentTypeFromName, dateFromName, buildInventoryText
 } from '../../../../lib/dropbox.js';
+import { validateAndRegister } from '../../../../lib/brand-identity.js';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -83,6 +84,26 @@ export async function POST(request) {
   const listing = await client.listBrandFolder(folder);
   const plan = listing.files.map((file) => ({ file, ...classifyFile(file) }));
 
+  // Pre-ingestion brand identity derivation (fail-closed)
+  const brandIdentity = await validateAndRegister({
+    folder: listing.folder,
+    files: listing.files,
+    brandId,
+    client,
+    bufferMap: null
+  });
+  if (!brandIdentity.ok) {
+    return Response.json({
+      ok: false,
+      error: `Brand identity derivation failed: ${brandIdentity.reason}`,
+      brandId,
+      folder: listing.folder,
+      derivation: brandIdentity.derived
+    }, { status: 400 });
+  }
+
+  const derivedName = brandIdentity.derived.fullName;
+
   if (dryRun) {
     const summary = {};
     for (const item of plan) summary[`${item.action}:${item.kind}`] = (summary[`${item.action}:${item.kind}`] || 0) + 1;
@@ -108,7 +129,7 @@ export async function POST(request) {
       }
       const buffer = await client.download(file, { maxBytes });
       const result = item.kind === 'swatch'
-        ? await ingestSwatch({ brandId, brandName: brand.name, folder: listing.folder, file, buffer })
+        ? await ingestSwatch({ brandId, brandName: derivedName, folder: listing.folder, file, buffer })
         : await ingestFileDocument({ brandId, folder: listing.folder, file, buffer });
       results.push({ path: file.relPath, status: result.inserted ? 'ingested' : 'skipped', chunks: result.inserted, scope: result.metadata?.knowledge_scope || null });
     } catch (error) {
@@ -119,16 +140,16 @@ export async function POST(request) {
   }
 
   // Logos, brand elements and fonts: kept as names only, in one inventory record per brand.
-  const inventoryEntries = plan.filter((i) => i.action === 'inventory').map((i) => ({ kind: i.kind, relPath: i.file.relPath }));
-  const inventoryText = buildInventoryText(brand.name, inventoryEntries);
+  const inventoryEntries = plan.filter((i) => i.action === 'inventory').map((i) => ({ kind: i.kind, relPath: i.file.relPath, href: i.file.href }));
+  const inventoryText = buildInventoryText(derivedName, inventoryEntries);
   if (inventoryText && !selected) {
     try {
       const inv = await ingestDocument({
-        brandId, title: `${brand.name} asset inventory`, text: inventoryText, source: `dropbox:inventory:${brandId}`,
+        brandId, title: `${derivedName} asset inventory`, text: inventoryText, source: `dropbox:inventory:${brandId}`,
         documentType: 'creative_asset', sourcePath: `${listing.folder}/(asset inventory)`, replace: true,
         metadata: builtInMetadata({
-          brandName: brand.name, documentType: 'creative_asset', domains: ['visual_identity', 'assets'], authority: 'low',
-          summary: `Names of logo, brand-element and font files supplied for ${brand.name}. Names only.`,
+          brandName: derivedName, documentType: 'creative_asset', domains: ['visual_identity', 'assets'], authority: 'low',
+          summary: `Names of logo, brand-element and font files supplied for ${derivedName}. Names only.`,
           topics: ['logo files', 'brand elements', 'fonts supplied'], reason: 'Built from file names in the brand folder.'
         })
       });
