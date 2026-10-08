@@ -164,7 +164,9 @@ export async function POST(request) {
     for (const item of plan.filter((i) => i.action !== 'ingest')) {
       await recordManifest({
         brandId, source: `dropbox:${item.file.fileId || item.file.relPath}`, sourcePath: `${listing.folder}/${item.file.relPath}`,
-        title: item.file.name, status: 'skipped', skipReason: item.reason
+        title: item.file.name, status: 'skipped', skipReason: item.reason,
+        fileUrl: item.action === 'inventory' && item.file.href ? String(item.file.href) : null,
+        assetKind: item.action === 'inventory' ? item.kind : null
       });
     }
   }
