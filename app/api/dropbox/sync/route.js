@@ -79,6 +79,10 @@ export async function POST(request) {
 
   const { data: brand } = await supabase().from('brands').select('id,name,status').eq('id', brandId).maybeSingle();
   if (!brand) return Response.json({ ok: false, error: `Unknown brand "${brandId}". Add it to the brands table first.` }, { status: 404 });
+  if (brand.status === 'onboarding') {
+    await supabase().from('brands').update({ status: 'active' }).eq('id', brandId);
+    brand.status = 'active';
+  }
 
   const client = await openSharedLink(link);
   const listing = await client.listBrandFolder(folder);
