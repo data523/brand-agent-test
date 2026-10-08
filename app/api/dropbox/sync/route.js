@@ -84,25 +84,28 @@ export async function POST(request) {
   const listing = await client.listBrandFolder(folder);
   const plan = listing.files.map((file) => ({ file, ...classifyFile(file) }));
 
-  // Pre-ingestion brand identity derivation (fail-closed)
-  const brandIdentity = await validateAndRegister({
-    folder: listing.folder,
-    files: listing.files,
-    brandId,
-    client,
-    bufferMap: null
-  });
-  if (!brandIdentity.ok) {
-    return Response.json({
-      ok: false,
-      error: `Brand identity derivation failed: ${brandIdentity.reason}`,
-      brandId,
+  // inventoryOnly re-syncs only refresh asset file_url rows — brand was already validated at
+  // first ingest, so skip the expensive download-based identity check here.
+  let derivedName = brand.name;
+  if (!inventoryOnly) {
+    const brandIdentity = await validateAndRegister({
       folder: listing.folder,
-      derivation: brandIdentity.derived
-    }, { status: 400 });
+      files: listing.files,
+      brandId,
+      client,
+      bufferMap: null
+    });
+    if (!brandIdentity.ok) {
+      return Response.json({
+        ok: false,
+        error: `Brand identity derivation failed: ${brandIdentity.reason}`,
+        brandId,
+        folder: listing.folder,
+        derivation: brandIdentity.derived
+      }, { status: 400 });
+    }
+    derivedName = brandIdentity.derived.fullName;
   }
-
-  const derivedName = brandIdentity.derived.fullName;
 
   if (dryRun) {
     const summary = {};
