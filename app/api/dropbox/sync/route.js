@@ -96,15 +96,22 @@ export async function POST(request) {
       bufferMap: null
     });
     if (!brandIdentity.ok) {
-      return Response.json({
-        ok: false,
-        error: `Brand identity derivation failed: ${brandIdentity.reason}`,
-        brandId,
-        folder: listing.folder,
-        derivation: brandIdentity.derived
-      }, { status: 400 });
+      // Brands with no guideline PDF (logo/swatch-only) cannot derive identity from a document.
+      // Fall back to the existing brand name so swatches and assets can still be ingested.
+      if (brandIdentity.reason === 'No candidate PDF found') {
+        console.warn(`[sync] No PDF for brand ${brandId}; using existing name "${brand.name}" and continuing`);
+      } else {
+        return Response.json({
+          ok: false,
+          error: `Brand identity derivation failed: ${brandIdentity.reason}`,
+          brandId,
+          folder: listing.folder,
+          derivation: brandIdentity.derived
+        }, { status: 400 });
+      }
+    } else {
+      derivedName = brandIdentity.derived.fullName;
     }
-    derivedName = brandIdentity.derived.fullName;
   }
 
   if (dryRun) {
