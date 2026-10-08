@@ -343,5 +343,47 @@
     "answerMustBeNonMeta": true,
     "notes": "Tests epistemic honesty.",
     "category": "epistemic-safety"
+  },
+  {
+    "id": "visual-main-logo",
+    "question": "What's the main logo for this brand? Describe it from the visual evidence.",
+    "mustContain": [],
+    "mustNotContain": [
+      "#"
+    ],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests visual logo recognition from rendered pages/slides. Must cite visual source, no invented HEX codes.",
+    "expectedPlan": {
+      "knowledge_scope": "client_brand"
+    },
+    "category": "voice-and-visual"
+  },
+  {
+    "id": "visual-logo-placement",
+    "question": "Where is the logo typically placed in brand materials? Use visual evidence.",
+    "mustContain": [],
+    "mustNotContain": [
+      "#"
+    ],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests visual layout grounding. Must cite rendered page/slide sources showing logo placement.",
+    "expectedPlan": {
+      "knowledge_scope": "client_brand"
+    },
+    "category": "voice-and-visual"
+  },
+  {
+    "id": "visual-style",
+    "question": "What is the overall visual style of this brand? Describe from rendered pages/slides.",
+    "mustContain": [],
+    "mustNotContain": [
+      "#"
+    ],
+    "answerMustBeNonMeta": true,
+    "notes": "Tests visual style synthesis from vision. Must distinguish documented vs observed visual attributes, no invented HEX/font names.",
+    "expectedPlan": {
+      "knowledge_scope": "client_brand"
+    },
+    "category": "voice-and-visual"
   }
 ]
