@@ -46,13 +46,31 @@ async function ingestSwatch({ brandId, brandName, folder, file, buffer }) {
 
 async function ingestFileDocument({ brandId, folder, file, buffer }) {
   const isPdf = /\.pdf$/i.test(file.name);
-  const text = /\.txt$/i.test(file.name)
-    ? buffer.toString('utf8').trim()
-    : (await parseOfficeBuffer(buffer, { fileType: isPdf ? 'pdf' : 'pptx', enableOcr: process.env.DOCUMENT_PARSER_OCR === 'true' })).text;
+  let text = '';
+  let visualMetadata = null;
+
+  if (/\.txt$/i.test(file.name)) {
+    text = buffer.toString('utf8').trim();
+  } else {
+    const extracted = await parseOfficeBuffer(buffer, { fileType: isPdf ? 'pdf' : 'pptx', enableOcr: process.env.DOCUMENT_PARSER_OCR === 'true' });
+    text = extracted.text;
+    if (process.env.VISION_ENABLED !== 'false' && (extracted.visualAssets?.length || extracted.renderedPages?.length)) {
+      const { analyzeVisualAssets } = await import('../../../../lib/vision.js');
+      visualMetadata = await analyzeVisualAssets({
+        title: file.name,
+        sourcePath: `${folder}/${file.relPath}`,
+        assets: extracted.visualAssets,
+        pages: extracted.renderedPages || [],
+        visualContext: text.slice(0, 5000)
+      });
+    }
+  }
+
   const result = await ingestDocument({
     brandId, title: file.name, text, source: `dropbox:${file.fileId || file.relPath}`,
     documentType: documentTypeFromName(file.name), date: dateFromName(file.name),
     sourcePath: `${folder}/${file.relPath}`, replace: true,
+    visualMetadata,
     sourceMetadata: { mimeType: isPdf ? 'application/pdf' : 'application/octet-stream', folder, relPath: file.relPath }
   });
   // Older versions stay searchable as history but must never win over the current one.
