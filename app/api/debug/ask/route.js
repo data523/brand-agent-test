@@ -10,7 +10,7 @@ function authorized(request) {
 }
 
 export async function POST(request) {
-  // if (!authorized(request)) return Response.json({ ok: false }, { status: 401 });
+  if (!authorized(request)) return Response.json({ ok: false }, { status: 401 });
 
   const body = await request.json();
   const brandId = body.brandId || config().defaultBrandId;
