@@ -2,7 +2,7 @@ import { config } from '../../../../lib/config.js';
 import { runBrandAgent } from '../../../../lib/agent.js';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function authorized(request) {
   const header = request.headers.get('authorization') || '';
