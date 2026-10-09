@@ -89,7 +89,7 @@ export async function POST(request) {
   if (bearer !== `Bearer ${config().adminSecret}` && !(scoped && bearer === `Bearer ${scoped}`)) return Response.json({ ok: false }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
-  const { brandId, folder, dryRun = false, onlyPaths = null, inventoryOnly = false } = body;
+  const { brandId, folder, dryRun = false, onlyPaths = null, inventoryOnly = false, offset = 0, limit = 99999 } = body;
   const maxBytes = Number(body.maxBytes || process.env.DROPBOX_MAX_BYTES || DEFAULT_MAX_BYTES);
   const link = process.env.DROPBOX_SHARED_LINK;
   if (!brandId || !folder) return Response.json({ ok: false, error: 'brandId and folder are required' }, { status: 400 });
@@ -108,8 +108,9 @@ export async function POST(request) {
 
   // inventoryOnly re-syncs only refresh asset file_url rows — brand was already validated at
   // first ingest, so skip the expensive download-based identity check here.
+  // We also skip validation if offset > 0, because it was done in the first batch.
   let derivedName = brand.name;
-  if (!inventoryOnly) {
+  if (!inventoryOnly && offset === 0) {
     const brandIdentity = await validateAndRegister({
       folder: listing.folder,
       files: listing.files,
@@ -148,8 +149,12 @@ export async function POST(request) {
   const results = [];
   const selected = Array.isArray(onlyPaths) && onlyPaths.length ? new Set(onlyPaths) : null;
 
+  const ingestPlan = plan.filter((i) => i.action === 'ingest' && (!selected || selected.has(i.file.relPath)));
+  const batchPlan = ingestPlan.slice(offset, offset + limit);
+
   // inventoryOnly: skip parsing and only write the asset inventory + manifest rows for skipped/name-only files.
-  for (const item of plan.filter((i) => !inventoryOnly && i.action === 'ingest' && (!selected || selected.has(i.file.relPath)))) {
+  for (const item of batchPlan) {
+    if (inventoryOnly) continue;
     const { file } = item;
     const source = `dropbox:${file.fileId || file.relPath}`;
     const manifest = { brandId, source, sourcePath: `${listing.folder}/${file.relPath}`, title: file.name };
@@ -174,7 +179,7 @@ export async function POST(request) {
   // Logos, brand elements and fonts: kept as names only, in one inventory record per brand.
   const inventoryEntries = plan.filter((i) => i.action === 'inventory').map((i) => ({ kind: i.kind, relPath: i.file.relPath, href: i.file.href }));
   const inventoryText = buildInventoryText(derivedName, inventoryEntries);
-  if (inventoryText && !selected) {
+  if (inventoryText && !selected && offset === 0) {
     try {
       const inv = await ingestDocument({
         brandId, title: `${derivedName} asset inventory`, text: inventoryText, source: `dropbox:inventory:${brandId}`,
@@ -192,7 +197,7 @@ export async function POST(request) {
   }
 
   // Everything not parsed still leaves a manifest row, so skips are visible.
-  if (!selected) {
+  if (!selected && offset === 0) {
     for (const item of plan.filter((i) => i.action !== 'ingest')) {
       await recordManifest({
         brandId, source: `dropbox:${item.file.fileId || item.file.relPath}`, sourcePath: `${listing.folder}/${item.file.relPath}`,
@@ -204,5 +209,5 @@ export async function POST(request) {
   }
 
   const counts = results.reduce((acc, r) => ({ ...acc, [r.status]: (acc[r.status] || 0) + 1 }), {});
-  return Response.json({ ok: true, brandId, folder: listing.folder, filesFound: plan.length, counts, results });
+  return Response.json({ ok: true, brandId, folder: listing.folder, filesFound: plan.length, filesIngesting: ingestPlan.length, hasMore: offset + limit < ingestPlan.length, counts, results });
 }
