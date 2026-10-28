@@ -16,7 +16,7 @@ Add these to Vercel project settings (Project → Settings → Environment Varia
 
 1. Go to Fireflies Settings → Integrations → Webhooks
 2. Add webhook URL: `https://brand-agent-test.vercel.app/api/firefly/webhook`
-3. Select events: `meeting_transcript_ready` (recommended)
+3. Select events: `meeting.transcribed` and `meeting.summarized` (recommended)
 4. Copy the **Signing Secret** → set as `FIREFLY_WEBHOOK_SECRET` in Vercel
 5. Generate API key in Fireflies Settings → API → set as `FIREFLIES_API_KEY` in Vercel
 
@@ -26,12 +26,24 @@ Add these to Vercel project settings (Project → Settings → Environment Varia
 - Format: `sha256=<hex_digest>`
 - Algorithm: HMAC-SHA256 of raw request body
 
+## Supported Event Types
+
+| Event | Ingested | Notes |
+|-------|----------|-------|
+| `meeting.transcribed` | ✅ | Full transcript available |
+| `meeting.summarized` | ✅ | Summary + transcript |
+| `meeting.bot_joined` | ❌ | Acknowledged (2xx) but not ingested |
+
+Other events are acknowledged with 2xx but ignored.
+
 ## Idempotency
 
 Processed meetings are tracked in `firefly_webhook_processed` table:
-- Primary key: `meeting_id`
+- Composite primary key: `(meeting_id, event_type)`
 - Stores `payload_hash` to detect retry with different payload
-- Prevents duplicate ingestion on webhook retries
+- `reprocessed_at` updated on each retry attempt
+- Only successful ingestions are marked as processed
+- Failures are NOT recorded, allowing retries
 
 ## Brand Inference
 
@@ -46,6 +58,11 @@ Meetings are matched to brands by keywords in title/transcript/participants:
 - `meghna foods` / `meghana's` / `meghana` → `meghna-foods`
 
 Falls back to `DEFAULT_BRAND_ID` if no match.
+
+## Date & Duration Handling
+
+- `Transcript.date` → epoch milliseconds → converted to ISO 8601
+- `Transcript.duration` → minutes → labeled as "Xmin"
 
 ## Testing Locally
 

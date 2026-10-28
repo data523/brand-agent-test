@@ -13,9 +13,12 @@ function verifyFireflySignature(payload, signature, secret) {
   return crypto.timingSafeEqual(sigBuffer, expBuffer);
 }
 
+const INGEST_EVENTS = new Set(['meeting.transcribed', 'meeting.summarized']);
+const ACK_EVENTS = new Set(['meeting.transcribed', 'meeting.summarized', 'meeting.bot_joined']);
+
 test('accepts a correct Fireflies V2 signature (sha256= prefix)', () => {
   const secret = 'test-webhook-secret';
-  const rawBody = JSON.stringify({ event: 'meeting_transcript_ready', meeting_id: 'meet_123' });
+  const rawBody = JSON.stringify({ event: 'meeting.transcribed', meeting_id: 'meet_123' });
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   const signature = `sha256=${expected}`;
   assert.equal(verifyFireflySignature(rawBody, signature, secret), true);
@@ -23,7 +26,7 @@ test('accepts a correct Fireflies V2 signature (sha256= prefix)', () => {
 
 test('accepts a correct Fireflies V2 signature (without sha256= prefix)', () => {
   const secret = 'test-webhook-secret';
-  const rawBody = JSON.stringify({ event: 'meeting_transcript_ready', meeting_id: 'meet_123' });
+  const rawBody = JSON.stringify({ event: 'meeting.transcribed', meeting_id: 'meet_123' });
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   const signature = expected;
   assert.equal(verifyFireflySignature(rawBody, signature, secret), true);
@@ -31,15 +34,15 @@ test('accepts a correct Fireflies V2 signature (without sha256= prefix)', () => 
 
 test('rejects tampered Fireflies body', () => {
   const secret = 'test-webhook-secret';
-  const originalBody = JSON.stringify({ event: 'meeting_transcript_ready', meeting_id: 'meet_123' });
-  const tamperedBody = JSON.stringify({ event: 'meeting_transcript_ready', meeting_id: 'meet_456' });
+  const originalBody = JSON.stringify({ event: 'meeting.transcribed', meeting_id: 'meet_123' });
+  const tamperedBody = JSON.stringify({ event: 'meeting.transcribed', meeting_id: 'meet_456' });
   const expected = crypto.createHmac('sha256', secret).update(originalBody).digest('hex');
   const signature = `sha256=${expected}`;
   assert.equal(verifyFireflySignature(tamperedBody, signature, secret), false);
 });
 
 test('rejects request when secret is missing', () => {
-  const rawBody = JSON.stringify({ event: 'meeting_transcript_ready', meeting_id: 'meet_123' });
+  const rawBody = JSON.stringify({ event: 'meeting.transcribed', meeting_id: 'meet_123' });
   const expected = crypto.createHmac('sha256', 'secret').update(rawBody).digest('hex');
   const signature = `sha256=${expected}`;
   assert.equal(verifyFireflySignature(rawBody, signature, ''), false);
@@ -48,14 +51,26 @@ test('rejects request when secret is missing', () => {
 
 test('rejects request when signature is missing', () => {
   const secret = 'test-webhook-secret';
-  const rawBody = JSON.stringify({ event: 'meeting_transcript_ready', meeting_id: 'meet_123' });
+  const rawBody = JSON.stringify({ event: 'meeting.transcribed', meeting_id: 'meet_123' });
   assert.equal(verifyFireflySignature(rawBody, '', secret), false);
   assert.equal(verifyFireflySignature(rawBody, undefined, secret), false);
 });
 
 test('rejects request with wrong secret', () => {
-  const rawBody = JSON.stringify({ event: 'meeting_transcript_ready', meeting_id: 'meet_123' });
+  const rawBody = JSON.stringify({ event: 'meeting.transcribed', meeting_id: 'meet_123' });
   const expected = crypto.createHmac('sha256', 'wrong-secret').update(rawBody).digest('hex');
   const signature = `sha256=${expected}`;
   assert.equal(verifyFireflySignature(rawBody, signature, 'correct-secret'), false);
+});
+
+test('INGEST_EVENTS includes meeting.transcribed and meeting.summarized', () => {
+  assert.equal(INGEST_EVENTS.has('meeting.transcribed'), true);
+  assert.equal(INGEST_EVENTS.has('meeting.summarized'), true);
+  assert.equal(INGEST_EVENTS.has('meeting.bot_joined'), false);
+});
+
+test('ACK_EVENTS includes all three event types', () => {
+  assert.equal(ACK_EVENTS.has('meeting.transcribed'), true);
+  assert.equal(ACK_EVENTS.has('meeting.summarized'), true);
+  assert.equal(ACK_EVENTS.has('meeting.bot_joined'), true);
 });

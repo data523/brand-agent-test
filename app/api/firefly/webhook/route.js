@@ -1,4 +1,3 @@
-import { config } from '../../../../lib/config.js';
 import { ingestDocument } from '../../../../lib/rag.js';
 import { supabase } from '../../../../lib/db.js';
 import crypto from 'node:crypto';
@@ -35,6 +34,9 @@ const TRANSCRIPT_QUERY = `
     }
   }
 `;
+
+const INGEST_EVENTS = new Set(['meeting.transcribed', 'meeting.summarized']);
+const ACK_EVENTS = new Set(['meeting.transcribed', 'meeting.summarized', 'meeting.bot_joined']);
 
 function verifyFireflySignature(payload, signature, secret) {
   if (!secret) return false;
@@ -107,35 +109,42 @@ function extractBrandIdFromMeeting(meeting, defaultBrandId) {
   return defaultBrandId;
 }
 
-async function checkAndMarkProcessed(meetingId, payloadHash, eventType, brandId) {
-  const { data: existing } = await supabase()
+async function checkProcessed(meetingId, eventType, payloadHash) {
+  const { data: existing, error } = await supabase()
     .from('firefly_webhook_processed')
-    .select('meeting_id, payload_hash')
+    .select('payload_hash, processed_at')
     .eq('meeting_id', meetingId)
+    .eq('event_type', eventType)
     .single();
 
-  if (existing) {
-    if (existing.payload_hash === payloadHash) {
-      return { isDuplicate: true, shouldProcess: false };
-    }
+  if (error && error.code !== 'PGRST116') {
+    throw error;
+  }
+
+  if (!existing) {
     return { isDuplicate: false, shouldProcess: true };
+  }
+
+  if (existing.payload_hash === payloadHash) {
+    return { isDuplicate: true, shouldProcess: false };
   }
 
   return { isDuplicate: false, shouldProcess: true };
 }
 
-async function recordProcessed(meetingId, payloadHash, eventType, brandId, result) {
+async function recordProcessed(meetingId, eventType, payloadHash, brandId, result) {
   await supabase().from('firefly_webhook_processed').upsert({
     meeting_id: meetingId,
-    payload_hash: payloadHash,
     event_type: eventType,
+    payload_hash: payloadHash,
     brand_id: brandId,
+    processed_at: new Date().toISOString(),
+    reprocessed_at: new Date().toISOString(),
     ingest_result: result,
   });
 }
 
 export async function POST(request) {
-  const cfg = config();
   const fireflySecret = process.env.FIREFLY_WEBHOOK_SECRET || '';
   const firefliesApiKey = process.env.FIREFLIES_API_KEY || '';
   const signature = request.headers.get('x-hub-signature') || request.headers.get('x-hub-signature-256') || '';
@@ -170,11 +179,27 @@ export async function POST(request) {
     return Response.json({ ok: false, error: 'Missing event or meeting_id in payload' }, { status: 400 });
   }
 
+  if (!ACK_EVENTS.has(eventType)) {
+    console.warn('[firefly/webhook] Unknown event type, acknowledging:', eventType);
+    return Response.json({ ok: true, ignored: true, eventType });
+  }
+
+  if (!INGEST_EVENTS.has(eventType)) {
+    return Response.json({ ok: true, ignored: true, eventType, reason: 'bot_joined event not ingested' });
+  }
+
   const payloadHash = crypto.createHash('sha256').update(rawBody).digest('hex');
 
-  const { isDuplicate, shouldProcess } = await checkAndMarkProcessed(meetingId, payloadHash, eventType, null);
-  if (isDuplicate) {
-    return Response.json({ ok: true, duplicate: true, meetingId });
+  let processedCheck;
+  try {
+    processedCheck = await checkProcessed(meetingId, eventType, payloadHash);
+  } catch (error) {
+    console.error('[firefly/webhook] DB check failed:', error);
+    return Response.json({ ok: false, error: 'Database error checking idempotency' }, { status: 500 });
+  }
+
+  if (processedCheck.isDuplicate) {
+    return Response.json({ ok: true, duplicate: true, meetingId, eventType });
   }
 
   let transcriptData;
@@ -194,15 +219,20 @@ export async function POST(request) {
     return Response.json({ ok: false, error: 'Transcript too short or empty' }, { status: 400 });
   }
 
+  const { config } = await import('../../../../lib/config.js');
+  const cfg = config();
   const brandId = extractBrandIdFromMeeting(transcriptData, cfg.defaultBrandId);
   if (!brandId) {
     return Response.json({ ok: false, error: 'No brandId configured and unable to infer from meeting' }, { status: 400 });
   }
 
+  const meetingDate = transcriptData.date ? new Date(Number(transcriptData.date)).toISOString() : new Date().toISOString();
+  const durationLabel = transcriptData.duration ? `${transcriptData.duration}min` : 'unknown';
+
   const fullText = [
     `Meeting: ${transcriptData.title || 'Firefly Meeting'}`,
-    `Date: ${transcriptData.date || new Date().toISOString()}`,
-    `Duration: ${transcriptData.duration ? `${transcriptData.duration}s` : 'unknown'}`,
+    `Date: ${meetingDate}`,
+    `Duration: ${durationLabel}`,
     `Organizer: ${transcriptData.organizer_email || 'unknown'}`,
     `Participants: ${Array.isArray(transcriptData.participants) ? transcriptData.participants.join(', ') : 'none'}`,
     transcriptData.summary?.overview ? `Summary: ${transcriptData.summary.overview}` : '',
@@ -215,7 +245,7 @@ export async function POST(request) {
     source: 'firefly',
     meeting_url: transcriptData.transcript_url || '',
     meeting_id: meetingId,
-    started_at: transcriptData.date || new Date().toISOString(),
+    started_at: meetingDate,
     attendees: Array.isArray(transcriptData.participants) ? transcriptData.participants : [],
     firefly_payload: payload,
     firefly_summary: transcriptData.summary || null,
@@ -229,16 +259,20 @@ export async function POST(request) {
       text: fullText,
       source: 'firefly_meeting',
       documentType: 'meeting_notes',
-      date: transcriptData.date || new Date().toISOString(),
+      date: meetingDate,
       metadata,
     });
   } catch (error) {
     console.error('[firefly/webhook] Ingestion failed:', error);
-    await recordProcessed(meetingId, payloadHash, eventType, brandId, { error: error.message });
     return Response.json({ ok: false, error: error.message }, { status: 500 });
   }
 
-  await recordProcessed(meetingId, payloadHash, eventType, brandId, result);
+  try {
+    await recordProcessed(meetingId, eventType, payloadHash, brandId, result);
+  } catch (error) {
+    console.error('[firefly/webhook] Failed to record processed:', error);
+    return Response.json({ ok: false, error: 'Failed to record processing status' }, { status: 500 });
+  }
 
   return Response.json({ ok: true, brandId, ...result });
 }
