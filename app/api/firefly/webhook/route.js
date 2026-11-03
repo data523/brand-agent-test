@@ -144,6 +144,27 @@ async function recordProcessed(meetingId, eventType, payloadHash, brandId, resul
   });
 }
 
+async function storeMeetingRecord(meetingId, eventType, transcriptData, payload) {
+  const startedAt = transcriptData.date ? new Date(Number(transcriptData.date)).toISOString() : null;
+  const endedAt = startedAt && transcriptData.duration
+    ? new Date(new Date(startedAt).getTime() + transcriptData.duration * 60000).toISOString()
+    : null;
+
+  await supabase().from('fireflies_meetings').upsert({
+    meeting_id: meetingId,
+    event_type: eventType,
+    title: transcriptData.title || null,
+    host_email: transcriptData.organizer_email || null,
+    participants: Array.isArray(transcriptData.participants) ? transcriptData.participants : [],
+    transcript_url: transcriptData.transcript_url || null,
+    summary: transcriptData.summary || null,
+    duration: transcriptData.duration || null,
+    started_at: startedAt,
+    ended_at: endedAt,
+    raw_payload: payload,
+  }, { onConflict: 'meeting_id,event_type' });
+}
+
 export async function POST(request) {
   const fireflySecret = process.env.FIREFLY_WEBHOOK_SECRET || '';
   const firefliesApiKey = process.env.FIREFLIES_API_KEY || '';
@@ -185,7 +206,13 @@ export async function POST(request) {
   }
 
   if (!INGEST_EVENTS.has(eventType)) {
-    return Response.json({ ok: true, ignored: true, eventType, reason: 'bot_joined event not ingested' });
+    // bot_joined - store meeting record but don't ingest transcript
+    try {
+      await storeMeetingRecord(meetingId, eventType, { title: payload.title, organizer_email: payload.host_email, participants: payload.participants, transcript_url: payload.transcript_url, summary: payload.summary, duration: payload.duration, date: payload.started_at }, payload);
+    } catch (error) {
+      console.error('[firefly/webhook] Failed to store meeting record:', error);
+    }
+    return Response.json({ ok: true, ignored: true, eventType, reason: 'bot_joined event stored' });
   }
 
   const payloadHash = crypto.createHash('sha256').update(rawBody).digest('hex');
@@ -269,6 +296,7 @@ export async function POST(request) {
 
   try {
     await recordProcessed(meetingId, eventType, payloadHash, brandId, result);
+    await storeMeetingRecord(meetingId, eventType, transcriptData, payload);
   } catch (error) {
     console.error('[firefly/webhook] Failed to record processed:', error);
     return Response.json({ ok: false, error: 'Failed to record processing status' }, { status: 500 });
